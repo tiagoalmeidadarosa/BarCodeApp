@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Text, View, StyleSheet, Button } from 'react-native';
+import { Text, View, StyleSheet, Button, Alert, Modal, Pressable, TextInput } from 'react-native';
 import { BarCodeScanner } from 'expo-barcode-scanner';
 import moment from 'moment';
 
@@ -23,13 +23,57 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderRadius: 0,
     backgroundColor: 'tomato'
+  },
+  centeredView: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 22
+  },
+  modalView: {
+    margin: 20,
+    backgroundColor: "white",
+    borderRadius: 20,
+    padding: 35,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5
+  },
+  button: {
+    borderRadius: 10,
+    padding: 10,
+    elevation: 2,
+    backgroundColor: "#2196F3",
+  },
+  buttonDisabled: {
+    backgroundColor: "gray",
+  },
+  textStyle: {
+    color: "white",
+    fontWeight: "bold",
+    textAlign: "center"
+  },
+  input: {
+    width: 200,
+    height: 40,
+    margin: 12,
+    borderWidth: 1,
+    padding: 10,
   }
 });
 
 export default function App() {
   const [hasPermission, setHasPermission] = useState(null);
   const [scanned, setScanned] = useState(false);
-  const [text, setText] = useState('Not yet scanned')
+  const [text, setText] = useState('Not yet scanned');
+  const [modalVisible, setModalVisible] = useState(false);
+  const [billName, setBillName] = useState('');
 
   const askForCameraPermission = () => {
     (async () => {
@@ -58,6 +102,7 @@ export default function App() {
       
       setScanned(true);
       setText(`Data de vencimento: ${dueDate}\n Valor: R$ ${value}`);
+      setModalVisible(true);
       console.log('Type: ' + type + '\nData: ' + data);
     }
   };
@@ -87,9 +132,51 @@ export default function App() {
           onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
           style={{ height: 100, width: 400 }} />
       </View>
-      <Text style={styles.maintext}>{text}</Text>
 
-      {scanned && <Button title={'Scan again?'} onPress={() => setScanned(false)} color='tomato' />}
+      {scanned && (
+        <Button 
+          title={'Scan again?'} 
+          onPress={() => { 
+            setText('');
+            setScanned(false);
+          }} 
+          color='tomato'
+        />
+      )}
+
+      {modalVisible && (
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={modalVisible}
+          onRequestClose={() => {
+            Alert.alert("Modal has been closed.");
+            setModalVisible(!modalVisible);
+          }}
+        >
+          <View style={styles.centeredView}>
+            <View style={styles.modalView}>
+              <TextInput
+                style={styles.input}
+                onChangeText={setBillName}
+                value={billName}
+                placeholder="Nome da conta"
+              />
+              <Text style={styles.maintext}>{text}</Text>
+              <Pressable
+                style={billName !== '' ? styles.button : [styles.button, styles.buttonDisabled]}
+                onPress={() => {
+                  setBillName('');
+                  setModalVisible(!modalVisible);
+                }}
+                disabled={billName === ''}
+              >
+                <Text style={styles.textStyle}>Criar lembrete</Text>
+              </Pressable>
+            </View>
+          </View>
+        </Modal>
+      )}
     </View>
   );
 }
